@@ -1495,6 +1495,8 @@ public:
    * @return \c true if handled*/
   bool OnMouseOver(float x, float y, const IMouseMod& mod);
 
+  bool OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod);
+
   /** Called when the mouse leaves the graphics context */
   void OnMouseOut();
   

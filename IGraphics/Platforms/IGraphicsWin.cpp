@@ -397,6 +397,7 @@ LRESULT CALLBACK IGraphicsWin::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
       if (!(wParam & (MK_LBUTTON | MK_RBUTTON)))
       {
         IMouseInfo info = pGraphics->GetMouseInfo(lParam, wParam);
+        pGraphics->OnMouseMove(info.x, info.y, info.dX, info.dY, info.ms);
         if (pGraphics->OnMouseOver(info.x, info.y, info.ms))
         {
           TRACKMOUSEEVENT eventTrack = { sizeof(TRACKMOUSEEVENT), TME_LEAVE, hWnd, HOVER_DEFAULT };

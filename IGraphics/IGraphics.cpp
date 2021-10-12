@@ -1092,6 +1092,22 @@ void IGraphics::OnTouchCancelled(const std::vector<IMouseInfo>& points)
   }
 }
 
+
+bool IGraphics::OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod)
+{
+#ifdef IGRAPHICS_IMGUI
+  if (mImGuiRenderer)
+    mImGuiRenderer->OnMouseMove(dx, dy, mod);
+#endif
+
+  IControl* pControl = GetMouseControl(x, y, false, false);
+  if (pControl == nullptr)
+    return false;
+
+  pControl->OnMouseMove(x, y, dx, dy, mod);
+  return true;
+}
+
 bool IGraphics::OnMouseOver(float x, float y, const IMouseMod& mod)
 {
   Trace("IGraphics::OnMouseOver", __LINE__, "x:%0.2f, y:%0.2f, mod:LRSCA: %i%i%i%i%i",
