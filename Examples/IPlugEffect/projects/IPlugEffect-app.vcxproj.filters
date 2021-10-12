@@ -255,8 +255,8 @@
     <ClInclude Include="..\..\..\IPlug\IPlugPluginBase.h">
       <Filter>IPlug</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\IGraphics\ISender.h">
-      <Filter>IGraphics</Filter>
+    <ClInclude Include="..\..\..\IGraphics\Controls\IVChartEditor.h">
+      <Filter>IGraphics\Controls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

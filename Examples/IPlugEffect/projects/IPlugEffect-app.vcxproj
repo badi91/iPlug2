@@ -276,6 +276,7 @@
     <ClInclude Include="..\..\..\IGraphics\Controls\IFPSDisplayControl.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IPopupMenuControl.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\ITextEntryControl.h" />
+    <ClInclude Include="..\..\..\IGraphics\Controls\IVChartEditor.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IVKeyboardControl.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IVMeterControl.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IVMultiSliderControl.h" />

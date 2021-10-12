@@ -19,6 +19,7 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     const IRECT b = pGraphics->GetBounds();
     pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
     pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-100), kGain));
+    pGraphics->AttachControl(new IVChartEditorControl(b.GetCentredInside(200).GetVShifted(150), "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, pGraphics));
   };
 #endif
 }
