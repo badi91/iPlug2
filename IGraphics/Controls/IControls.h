@@ -27,6 +27,7 @@
 #include "ILEDControl.h"
 #include "IPopupMenuControl.h"
 #include "IVChartEditor.h"
+#include "ITabbedPanel.h"
 
 BEGIN_IPLUG_NAMESPACE
 BEGIN_IGRAPHICS_NAMESPACE

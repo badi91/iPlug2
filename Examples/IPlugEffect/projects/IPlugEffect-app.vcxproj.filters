@@ -258,6 +258,9 @@
     <ClInclude Include="..\..\..\IGraphics\Controls\IVChartEditor.h">
       <Filter>IGraphics\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\IGraphics\Controls\ITabbedPanel.h">
+      <Filter>IGraphics\Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">

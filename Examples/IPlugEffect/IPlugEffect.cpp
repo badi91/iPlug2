@@ -17,9 +17,15 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     pGraphics->AttachPanelBackground(COLOR_GRAY);
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
     const IRECT b = pGraphics->GetBounds();
-    pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
-    pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-100), kGain));
-    pGraphics->AttachControl(new IVChartEditorControl(b.GetCentredInside(200).GetVShifted(150), "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, pGraphics));
+    //pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
+    pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-250), kGain));
+    pGraphics->AttachControl(new ITabbedPanel(  //TODO: RECT & COLOR from TabbedPanel?
+      b.GetCentredInside(200, 300), "ITabbedPanel", DEFAULT_STYLE, std::vector<ITab*> {
+        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_RED, kTab1), "LOW"),
+        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_ORANGE, kTab2), "MID"),
+        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_YELLOW, kTab3), "HIGH"),
+        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, kTab4), "MASTER")
+    }));
   };
 #endif
 }

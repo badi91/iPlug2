@@ -7,6 +7,10 @@ const int kNumPresets = 1;
 enum EParams
 {
   kGain = 0,
+  kTab1,
+  kTab2,
+  kTab3,
+  kTab4,
   kNumParams
 };
 
