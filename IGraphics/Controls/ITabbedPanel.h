@@ -44,6 +44,9 @@ public:
       auto targetH = mWidgetBounds.H() / 3;
       tab->tabSelectorRect = mWidgetBounds.GetFromLeft(mWidgetBounds.W() / 3).GetFromBottom(targetH).GetFromTop(targetH / mTabs.size()).GetVShifted(i * (targetH / mTabs.size())).GetPadded(-3.0f, -1.0f, -3.0f, -1.0f);
     }
+
+    freezeButtonRect = mWidgetBounds.GetFromBRHC(10.0f, 10.0f).GetHShifted(-10.0).GetVShifted(-10.0f);
+    magnetButtonRect = mWidgetBounds.GetFromBRHC(10.0f, 10.0f).GetHShifted(-30.0).GetVShifted(-10.0f);
     
     SetDirty(false);
   }
@@ -64,21 +67,40 @@ public:
       g.DrawText(textStyle, tab->name.c_str(), tab->tabSelectorRect.GetFromRight(tab->tabSelectorRect.W() - 5.0f).GetPadded(-2.0f));
       g.FillRect(tab->control->GetColor(), tab->tabSelectorRect.GetFromLeft(5.0f));
     }
+
+    //Przycisk freeze
+    g.DrawCircle(COLOR_DARK_GRAY, freezeButtonRect.MW(), freezeButtonRect.MH(), 5.0f);
+    if (!getActiveControl()->getIsEditable())
+      g.FillCircle(COLOR_BLUE, freezeButtonRect.MW(), freezeButtonRect.MH(), 4.0f);
+
+    //Przycisk magnet
+    g.DrawCircle(COLOR_DARK_GRAY, magnetButtonRect.MW(), magnetButtonRect.MH(), 5.0f);
+    if (getActiveControl()->getSnapToGrid())
+      g.FillCircle(COLOR_RED, magnetButtonRect.MW(), magnetButtonRect.MH(), 4.0f);
   }
+
+  IVChartEditorControl* getActiveControl() { return mTabs[activeTabIndex]->control; }
 
   void DrawWidget(IGraphics& g) override
   {
-    mTabs[activeTabIndex]->control->Draw(g);
+    getActiveControl()->Draw(g);
   }
 
   void OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod) override
   {
-    mTabs[activeTabIndex]->control->OnMouseMove(x, y, dx, dy, mod);
+    if (getActiveControl()->getPlotBound().Contains(x, y))
+      getActiveControl()->OnMouseMove(x, y, dx, dy, mod);
     SetDirty(false);
   }
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
+    auto activeControl = getActiveControl();
+    if (freezeButtonRect.Contains(x, y))
+      activeControl->setIsEditable(!activeControl->getIsEditable());
+    if (magnetButtonRect.Contains(x, y))
+      activeControl->setSnapToGrid(!activeControl->getSnapToGrid());
+
     int i = 0;
     for (auto tab : mTabs) {
       if (tab->tabSelectorRect.Contains(x, y)) {
@@ -87,31 +109,37 @@ public:
       }
       ++i;
     }
-    mTabs[activeTabIndex]->control->OnMouseDown(x, y, mod);
+    if (activeControl->getPlotBound().Contains(x, y))
+      activeControl->OnMouseDown(x, y, mod);
     SetDirty(false);
   }
 
   void OnMouseUp(float x, float y, const IMouseMod& mod) override
   {
-    mTabs[activeTabIndex]->control->OnMouseUp(x, y, mod);
+    if (getActiveControl()->getPlotBound().Contains(x, y))
+      getActiveControl()->OnMouseUp(x, y, mod);
     SetDirty(false);
   }
 
   void OnMouseDrag(float x, float y, float dx, float dy, const IMouseMod& mod) override
   {
-    mTabs[activeTabIndex]->control->OnMouseDrag(x, y, dx, dy, mod);
+    if (getActiveControl()->getPlotBound().Contains(x, y))
+      getActiveControl()->OnMouseDrag(x, y, dx, dy, mod);
     SetDirty(false);
   }
 
   void OnMouseDblClick(float x, float y, const IMouseMod& mod) override
   {
-    mTabs[activeTabIndex]->control->OnMouseDblClick(x, y, mod);
+    if (getActiveControl()->getPlotBound().Contains(x, y))
+      getActiveControl()->OnMouseDblClick(x, y, mod);
     SetDirty(false);
   }
   
 private:
   std::vector<ITab*> mTabs;
   int activeTabIndex = 2;
+  IRECT freezeButtonRect;
+  IRECT magnetButtonRect;
 };
 
 END_IGRAPHICS_NAMESPACE

@@ -17,17 +17,16 @@ BEGIN_IGRAPHICS_NAMESPACE
 struct ChartEditorPoint
 {
 public:
-  ChartEditorPoint(double aX, double aY, bool isXRestricted = false) : x(aX), y(aY), isXRestricted(isXRestricted) {}
+  ChartEditorPoint(double aX, double aY, bool isXRestricted = false, double interpolationFactor = 0.5) :
+    x(aX), y(aY), isXRestricted(isXRestricted), interpolationFactor(interpolationFactor) {}
   double x;
   double y;
   //SmoothType smoothType;
-  double smoothFactorL;
-  double smoothFactorR;
-  bool isXRestricted;/*
-
-  bool operator==(const ChartEditorPoint& other) const {
-    return this->x == other.x && this->y == other.y && this->isXRestricted == other.isXRestricted;
-  }*/
+  //double smoothFactorL;
+  //double smoothFactorR;
+  double interpolationFactor; // -1 -> left to min (this point) +1 -> right to max (next point)
+  bool isXRestricted;
+  IVec2 midPoint;
 };
 
 struct ChartEditorPointComparer {
@@ -66,6 +65,8 @@ public:
   
   void OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod) override
   {
+    if (!mIsEditable)
+      return;
       ChartEditorPoint* orgFocusedPoint = mFocusedPoint;
       bool isAnyFocused = false;
       float percentSensitivity = 5;
@@ -94,6 +95,11 @@ public:
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
+    mIsPointBeingDragged = mIsMidPointBeingDragged = false;
+    mEditedPoint = mEditedMidPoint = nullptr;
+
+    if (!mIsEditable)
+      return;
     if (mod.R)
       rightClickedDown = true;
 
@@ -103,6 +109,7 @@ public:
     float boundsW = mWidgetBounds.W();
     float boundsH = mWidgetBounds.H();
 
+    //TODO: sprawdzić czy nie można wykorzystać tutaj jakoś IRECT
     for (auto it : mPoints) {
       if (std::abs(((x - boundsX) / boundsW) * 100.0 - it->x) < percentSensitivity
           && std::abs((100.0 - ((y - boundsY) / boundsH) * 100.0) - it->y) < percentSensitivity) {
@@ -111,10 +118,20 @@ public:
         SetDirty(false);
         break;
       }
+      if (std::abs(x - it->midPoint.x) < percentSensitivity
+        && std::abs(y - it->midPoint.y) < percentSensitivity) {
+        mIsMidPointBeingDragged = true;
+        mEditedMidPoint = it;
+        SetDirty(false);
+        break;
+      }
     }
   }
 
-  void HandleRightClick(float x, float y) {
+  void HandleRightClick(float x, float y)
+  {
+    if (!mIsEditable)
+      return;
     ChartEditorPoint* pointToDelete = nullptr; //TODO: TEMP UNTIL NO TOOLTIP
     float percentSensitivity = 5;
     float boundsX = mWidgetBounds.L;
@@ -128,6 +145,11 @@ public:
         pointToDelete = it;
         break;
       }
+      if (std::abs(x - it->midPoint.x) < percentSensitivity
+        && std::abs(y - it->midPoint.y) < percentSensitivity) {
+        it->interpolationFactor = 0.5;
+        break;
+      }
     }
     if (pointToDelete != nullptr && !pointToDelete->isXRestricted) {
       mPoints.erase(pointToDelete);
@@ -135,7 +157,10 @@ public:
     }
   }
 
-  void OnMouseDblClick(float x, float y, const IMouseMod& mod) override {
+  void OnMouseDblClick(float x, float y, const IMouseMod& mod) override
+  {
+    if (!mIsEditable)
+      return;
     bool overAnyPoint = false;
     float percentSensitivity = 5;
     float boundsX = mWidgetBounds.L;
@@ -169,6 +194,8 @@ public:
 
   void OnMouseUp(float x, float y, const IMouseMod& mod) override
   {
+    if (!mIsEditable)
+      return;
     //TODO: Tooltip dla punktu
     if (rightClickedDown) {
       HandleRightClick(x, y);
@@ -176,20 +203,38 @@ public:
       return;
     }
 
-    mIsPointBeingDragged = false;
-    mEditedPoint = nullptr;
+    mIsPointBeingDragged = mIsMidPointBeingDragged = false;
+    mEditedPoint = mEditedMidPoint = nullptr;
     SetDirty(false);
   }
 
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override
   {
-    if (mIsPointBeingDragged == false || mEditedPoint == nullptr || rightClickedDown)
+    //TODO: przerobić logikę mEditedPoint bo teraz można dragować też midpointy...
+
+
+    if ((mIsPointBeingDragged == false && mIsMidPointBeingDragged == false)
+      || (mEditedPoint == nullptr && mEditedMidPoint == nullptr)
+      || rightClickedDown
+      || !mIsEditable)
       return;
 
     float boundsX = mWidgetBounds.L;
     float boundsY = mWidgetBounds.T;
     float boundsW = mWidgetBounds.W();
     float boundsH = mWidgetBounds.H();
+
+    if (mIsMidPointBeingDragged && mEditedMidPoint != nullptr) {
+      double newX = (x - boundsX) / boundsW * 100.0;
+      double newY = 100 - (y - boundsY) / boundsH * 100.0;
+      auto nextPoint = std::next(mPoints.find(mEditedMidPoint));
+      double h = (*nextPoint)->y - mEditedMidPoint->y;
+      double newH = newY - mEditedMidPoint->y;
+
+      mEditedMidPoint->interpolationFactor = std::clamp(newH / h, 0.0, 1.0);
+
+      return;
+    }
 
     double newX = (x - boundsX) / boundsW * 100.0;
     double newY = 100 - (y - boundsY) / boundsH * 100.0;
@@ -208,6 +253,30 @@ public:
     SetDirty(false);
   }
 
+  //TODO: odpalać przy dodawaniu/usuwaniu punktów?
+  void CalculateMidPoints()
+  {
+    float x = mWidgetBounds.L;
+    float y = mWidgetBounds.T;
+    float w = mWidgetBounds.W();
+    float h = mWidgetBounds.H();
+
+    IVec2 midPoint;
+    for (auto it = mPoints.begin(); it != mPoints.end(); ++it) 
+    {
+      if (std::next(it) == mPoints.end()) 
+        break;
+      IVec2 thisPoint = IVec2(x + (*it)->x / 100.0 * w, y + h - (*it)->y / 100.0 * h);
+      IVec2 nextPoint = IVec2(x + (*std::next(it))->x / 100.0 * w, y + h - (*std::next(it))->y / 100.0 * h);
+      midPoint = thisPoint.GetMidPoint(nextPoint);
+      //TODO: only if non linear interpolation!
+      auto fy1 = [](double x) { return -2 * x + 2; };
+      auto fy2 = [](double x) { return 2 * x; };
+      midPoint.y = (((fy1((*it)->interpolationFactor)) * thisPoint.y) + ((fy2((*it)->interpolationFactor)) * nextPoint.y)) / 2.0;
+      (*it)->midPoint = midPoint;
+    }
+  }
+
   void OnResize() override
   {
     SetTargetRECT(MakeRects(mRECT));
@@ -217,12 +286,25 @@ public:
   
   void Draw(IGraphics& g) override
   {
+    CalculateMidPoints();
+
     DrawBackground(g, mRECT);
     DrawWidget(g);
     DrawLabel(g);
     
     if(mStyle.drawFrame)
       g.DrawRect(GetColor(kFR), mWidgetBounds, &mBlend, mStyle.frameThickness);
+  }
+
+  float LagrangeInterpolation(IGraphics& g, float xp, IVec2 point1, IVec2 point2, IVec2 point3)
+  {
+    float p1 = ((xp - point2.x) / (point1.x - point2.x))
+      * ((xp - point3.x) / (point1.x - point3.x));
+    float p2 = ((xp - point1.x) / (point2.x - point1.x))
+      * ((xp - point3.x) / (point2.x - point3.x));
+    float p3 = ((xp - point1.x) / (point3.x - point1.x))
+      * ((xp - point2.x) / (point3.x - point2.x));
+    return p1 * point1.y + p2 * point2.y + p3 * point3.y;
   }
 
   void DrawWidget(IGraphics& g) override
@@ -233,15 +315,27 @@ public:
     float h = mWidgetBounds.H();
 
     auto pathLinePoints = [&]() {
-      for (auto it : mPoints) {
-        if (it == (*mPoints.begin()))
+      for (auto it = mPoints.begin(); it != mPoints.end(); ++it) {
+        if (std::next(it) == mPoints.end())
           continue;
-        double vx = x + it->x / 100.0 * w;
-        double vy = y + h - it->y / 100.0 * h;
-        g.PathLineTo(vx, vy);
+
+        IVec2 thisPoint = IVec2(x + (*it)->x / 100.0 * w, y + h - (*it)->y / 100.0 * h);
+        IVec2 nextPoint = IVec2(x + (*std::next(it))->x / 100.0 * w, y + h - (*std::next(it))->y / 100.0 * h);
+        //g.DrawLine(COLOR_RED, (*it)->x, (*it)->y, (*it)->midPoint.x, (*it)->midPoint.y);
+        //g.DrawLine(COLOR_GREEN, (*it)->midPoint.x, (*it)->midPoint.y, (*std::next(it))->x, (*std::next(it))->y);
+        //g.PathQuadraticBezierTo((*it)->midPoint.x, (*it)->midPoint.y, nextPoint.x, nextPoint.y);
+        float lastDrawnX = 0;
+        for (float xp = thisPoint.x + 5; xp <= nextPoint.x; xp+=5) {
+          float yp = LagrangeInterpolation(g, xp, thisPoint, (*it)->midPoint, nextPoint);
+          float minValue = std::min(thisPoint.y, nextPoint.y);
+          float maxValue = std::max(thisPoint.y, nextPoint.y);
+          g.PathLineTo(xp, std::clamp(yp, minValue, maxValue));
+          lastDrawnX = xp;
+        }
+        if (lastDrawnX < nextPoint.x)
+          g.PathLineTo(nextPoint.x, nextPoint.y);
       }
     };
-
 
     //Wykres liniowy
     double vx0 = x + (*mPoints.begin())->x / 100.0 * w;
@@ -295,14 +389,22 @@ public:
     g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-3", IRECT(x + 6 * scale, y, x + 8 * scale, y + 15));
 
 
-    //TODO: DELETE
-    //Pisanie indeksów punktów
-    for (auto it : mPoints) {
-      double vx = x + it->x / 100.0 * w;
-      double vy = y + h - it->y / 100.0 * h;
-      int distance = std::distance(mPoints.begin(), mPoints.find(it));
-      g.DrawText(mStyle.valueText.WithSize(16.0f).WithFGColor(COLOR_WHITE), std::to_string(distance).c_str(), IRECT(vx - 10, vy, vx + 10, vy - 20));
+    //Rysowanie kontrolek pomiędzy punktami
+    for (auto it = mPoints.begin(); it != mPoints.end(); ++it) {
+      if (std::next(it) == mPoints.end()) {
+        continue;
+      }
+      g.DrawCircle(mColor, (*it)->midPoint.x, (*it)->midPoint.y, 4.0f);
     }
+    
+    ////TODO: DELETE
+    ////Pisanie indeksów punktów
+    //for (auto it : mPoints) {
+    //  double vx = x + it->x / 100.0 * w;
+    //  double vy = y + h - it->y / 100.0 * h;
+    //  int distance = std::distance(mPoints.begin(), mPoints.find(it));
+    //  g.DrawText(mStyle.valueText.WithSize(16.0f).WithFGColor(COLOR_WHITE), std::to_string(distance).c_str(), IRECT(vx - 10, vy, vx + 10, vy - 20));
+    //}
   }
   
   void OnMsgFromDelegate(int msgTag, int dataSize, const void* pData) override
@@ -329,6 +431,10 @@ public:
     SetDirty(false);
   }
 
+  IRECT getPlotBound() {
+    return mWidgetBounds;
+  }
+
   IColor GetColor() {
     return mColor;
   }
@@ -336,6 +442,26 @@ public:
   const IColor& GetColor(EVColor color) const
   {
     return mStyle.colorSpec.GetColor(color);
+  }
+
+  void setIsEditable(bool isEditable)
+  {
+    mIsEditable = isEditable;
+  }
+
+  void setSnapToGrid(bool snapToGrid)
+  {
+    mSnapToGrid = snapToGrid;
+  }
+
+  bool getIsEditable()
+  {
+    return mIsEditable;
+  }
+
+  bool getSnapToGrid()
+  {
+    return mSnapToGrid;
   }
 
   //TODO: jakie info wystawiać? dane na podstawie których tworzone są punkty, czy to po prostu sama tablica punktów czy raczej jakieś współczynniki?
@@ -348,6 +474,8 @@ private:
   ChartEditorPoint* mEditedPoint = nullptr;
   ChartEditorPoint* mFocusedPoint = nullptr;
   bool mIsPointBeingDragged = false;
+  bool mIsMidPointBeingDragged = false;
+  ChartEditorPoint* mEditedMidPoint = nullptr;
 };
 
 END_IGRAPHICS_NAMESPACE

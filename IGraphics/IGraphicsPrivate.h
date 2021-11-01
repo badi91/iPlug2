@@ -627,6 +627,9 @@ struct IVec2
   
   IVec2 operator-(const IVec2 b) { return IVec2{x-b.x, y-b.y}; }
   IVec2 operator+(const IVec2 b) { return IVec2{x+b.x, y+b.y}; }
+  IVec2 GetMidPoint(const IVec2 b) {
+    return IVec2((x + b.x) / 2.0f, (y + b.y) / 2.0f);
+  }
 };
 
 
