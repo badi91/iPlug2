@@ -19,8 +19,7 @@ public:
 };
 
 
-class ITabbedPanel : public IControl
-                       , public IVectorBase
+class ITabbedPanel : public IControl, public IVectorBase
 {
 public:  
   ITabbedPanel(const IRECT& bounds, const char* label, const IVStyle& style, std::vector<ITab*> tabs)
@@ -70,12 +69,12 @@ public:
 
     //Przycisk freeze
     g.DrawCircle(COLOR_DARK_GRAY, freezeButtonRect.MW(), freezeButtonRect.MH(), 5.0f);
-    if (!getActiveControl()->getIsEditable())
+    //if (!getActiveControl()->getIsEditable())
       g.FillCircle(COLOR_BLUE, freezeButtonRect.MW(), freezeButtonRect.MH(), 4.0f);
 
     //Przycisk magnet
     g.DrawCircle(COLOR_DARK_GRAY, magnetButtonRect.MW(), magnetButtonRect.MH(), 5.0f);
-    if (getActiveControl()->getSnapToGrid())
+    //if (getActiveControl()->getSnapToGrid())
       g.FillCircle(COLOR_RED, magnetButtonRect.MW(), magnetButtonRect.MH(), 4.0f);
   }
 
@@ -96,10 +95,10 @@ public:
   void OnMouseDown(float x, float y, const IMouseMod& mod) override
   {
     auto activeControl = getActiveControl();
-    if (freezeButtonRect.Contains(x, y))
-      activeControl->setIsEditable(!activeControl->getIsEditable());
-    if (magnetButtonRect.Contains(x, y))
-      activeControl->setSnapToGrid(!activeControl->getSnapToGrid());
+    //if (freezeButtonRect.Contains(x, y))
+    //  activeControl->setIsEditable(!activeControl->getIsEditable());
+    //if (magnetButtonRect.Contains(x, y))
+    //  activeControl->setSnapToGrid(!activeControl->getSnapToGrid());
 
     int i = 0;
     for (auto tab : mTabs) {

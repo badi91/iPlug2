@@ -52,3 +52,9 @@
 #define APP_SIGNAL_VECTOR_SIZE 64
 
 #define ROBOTO_FN "Roboto-Regular.ttf"
+#define MAGNET_FN "magnet.png"
+#define MAGNET_FOCUSED_FN "magnet_focused.png"
+#define MAGNET_SELECTED_FN "magnet_selected.png"
+#define FREEZE_FN "freeze.png"
+#define FREEZE_FOCUSED_FN "freeze_focused.png"
+#define FREEZE_SELECTED_FN "freeze_selected.png"

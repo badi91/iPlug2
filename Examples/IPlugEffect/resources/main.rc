@@ -1,5 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
+#pragma code_page(65001)
+
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -13,11 +15,10 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (United Kingdom) resources
+// Angielski (Zjednoczone Królestwo) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -135,21 +136,22 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "#include ""..\\config.h""\r\n"
-    "ROBOTO_FN TTF ROBOTO_FN\0"
+    "ROBOTO_FN TTF ROBOTO_FN\r\n"
+    "BITMAP_MAGNET_FN PNG BITMAP_MAGNET_FN\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -163,6 +165,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "IPlugEffect.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -178,7 +181,6 @@ BEGIN
     "E",            ID_LIVE_EDIT,           VIRTKEY, CONTROL, NOINVERT
 END
 
-/////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -186,8 +188,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 0,0,1,0
-PRODUCTVERSION 0,0,1,0
+ FILEVERSION 0,0,1,0
+ PRODUCTVERSION 0,0,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -218,7 +220,7 @@ BEGIN
     END
 END
 
-#endif    // English (United Kingdom) resources
+#endif    // Angielski (Zjednoczone Królestwo) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -230,6 +232,12 @@ END
 //
 #include "..\config.h"
 ROBOTO_FN TTF ROBOTO_FN
+MAGNET_FN PNG MAGNET_FN
+MAGNET_FOCUSED_FN PNG MAGNET_FOCUSED_FN
+MAGNET_SELECTED_FN PNG MAGNET_SELECTED_FN
+FREEZE_FN PNG FREEZE_FN
+FREEZE_FOCUSED_FN PNG FREEZE_FOCUSED_FN
+FREEZE_SELECTED_FN PNG FREEZE_SELECTED_FN
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

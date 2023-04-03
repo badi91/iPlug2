@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_map>
+#include <optional>
 
 #if defined VST3_API || defined VST3C_API
 #undef stricmp
@@ -619,6 +620,43 @@ public:
 protected:
   IBitmap mBitmap;
   IControl* mControl = nullptr;
+};
+
+//struct ControlProperty {
+//public:
+//  ControlProperty(std::string name, bool initialValue) : name(name), value(initialValue) {};
+//  void SetValue(bool value) { this->value = value; }
+//  bool GetValue() { return value; }
+//  std::string GetName() { return name; }
+//private:
+//  std::string name;
+//  bool value;
+//};
+
+/**
+Use in combination with IControl to indicate that it has bool properties that can be set (toggled) within IPropsControl
+*/
+class IHasProperties
+{
+public:
+  IHasProperties(std::unordered_map<std::string, std::pair<bool, std::string>>* properties) : properties(properties) {}
+  std::pair<bool, std::string> GetPropertyValue(std::string name) {
+    auto result = properties->find(name);
+    return result->second;
+  }
+  bool SetPropertyValue(std::string name, std::pair<bool, std::string> value) {
+    auto result = properties->find(name);
+    if (result == properties->end())
+      return false;
+    (*result).second = value;
+    DBGMSG("SetPropertyValue %s: %p, %p", name, result, result->second);
+    return true;
+  }
+  std::unordered_map<std::string, std::pair<bool, std::string>>* GetProperties() {
+    return properties;
+  }
+private:
+  std::unordered_map<std::string, std::pair<bool, std::string>>* properties;
 };
 
 /** A base interface to be combined with IControl for vectorial controls "IVControls", in order for them to share a common style

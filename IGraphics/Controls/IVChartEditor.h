@@ -35,18 +35,25 @@ struct ChartEditorPointComparer {
   }
 };
 
-class IVChartEditorControl : public IControl
-                       , public IVectorBase
+static const std::string Property_SnapToGrid = "Snap to Grid";
+static const std::string Property_Freeze = "Freeze";
+
+class IVChartEditorControl : public IControl, public IVectorBase, public IHasProperties
 {
 public:
   static constexpr int MAX_BUFFER_SIZE = 2048;
   
-  IVChartEditorControl(const IRECT& bounds, const char* label = "", const IVStyle& style = DEFAULT_STYLE, IColor color = COLOR_WHITE, int paramIndex = kNoParameter, bool snapToGrid = true, bool isEditable = true)
+  IVChartEditorControl(const IRECT& bounds, const char* label = "", const IVStyle& style = DEFAULT_STYLE, IColor color = COLOR_WHITE, int paramIndex = kNoParameter, bool snapToGrid = true,
+    bool isEditable = true, std::unordered_map<std::string, std::pair<bool, std::string>>* properties = nullptr)
   : IControl(bounds)
   , IVectorBase(style)
+  , IHasProperties(properties != nullptr ? properties : new std::unordered_map<std::string, std::pair<bool, std::string>> {
+    { Property_SnapToGrid, std::pair<bool, std::string>(true, "magnet") },
+    { Property_Freeze, std::pair<bool, std::string>(false, "freeze") }
+  })
   , mColor(color)
-  , mSnapToGrid(snapToGrid)
-  , mIsEditable(isEditable)
+  //, mSnapToGrid(snapToGrid)
+  //, mIsEditable(isEditable)
   {
     float boundsX = bounds.L;
     float boundsY = bounds.T;
@@ -62,33 +69,33 @@ public:
 
     AttachIControl(this, label);
   }
-  
+
   void OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod) override
   {
-    if (!mIsEditable)
+    if (GetPropertyValue(Property_Freeze).first)
       return;
-      ChartEditorPoint* orgFocusedPoint = mFocusedPoint;
-      bool isAnyFocused = false;
-      float percentSensitivity = 5;
-      float boundsX = mWidgetBounds.L;
-      float boundsY = mWidgetBounds.T;
-      float boundsW = mWidgetBounds.W();
-      float boundsH = mWidgetBounds.H();
+    ChartEditorPoint* orgFocusedPoint = mFocusedPoint;
+    bool isAnyFocused = false;
+    float percentSensitivity = 5;
+    float boundsX = mWidgetBounds.L;
+    float boundsY = mWidgetBounds.T;
+    float boundsW = mWidgetBounds.W();
+    float boundsH = mWidgetBounds.H();
 
-      for (auto it : mPoints) {
-        if (std::abs(((x - boundsX) / boundsW) * 100.0 - it->x) < percentSensitivity
-          && std::abs((100.0 - ((y - boundsY) / boundsH) * 100.0) - it->y) < percentSensitivity) {
-          mFocusedPoint = it;
-          isAnyFocused = true;
-          break;
-        }
+    for (auto it : mPoints) {
+      if (std::abs(((x - boundsX) / boundsW) * 100.0 - it->x) < percentSensitivity
+        && std::abs((100.0 - ((y - boundsY) / boundsH) * 100.0) - it->y) < percentSensitivity) {
+        mFocusedPoint = it;
+        isAnyFocused = true;
+        break;
       }
+    }
 
-      if (!isAnyFocused)
-        mFocusedPoint = nullptr;
+    if (!isAnyFocused)
+      mFocusedPoint = nullptr;
 
-      if (mFocusedPoint != orgFocusedPoint)
-        SetDirty(false);
+    if (mFocusedPoint != orgFocusedPoint)
+      SetDirty(false);
   }
 
   bool rightClickedDown = false;
@@ -98,7 +105,7 @@ public:
     mIsPointBeingDragged = mIsMidPointBeingDragged = false;
     mEditedPoint = mEditedMidPoint = nullptr;
 
-    if (!mIsEditable)
+    if (GetPropertyValue(Property_Freeze).first)
       return;
     if (mod.R)
       rightClickedDown = true;
@@ -130,7 +137,7 @@ public:
 
   void HandleRightClick(float x, float y)
   {
-    if (!mIsEditable)
+    if (GetPropertyValue(Property_Freeze).first)
       return;
     ChartEditorPoint* pointToDelete = nullptr; //TODO: TEMP UNTIL NO TOOLTIP
     float percentSensitivity = 5;
@@ -159,7 +166,7 @@ public:
 
   void OnMouseDblClick(float x, float y, const IMouseMod& mod) override
   {
-    if (!mIsEditable)
+    if (GetPropertyValue(Property_Freeze).first)
       return;
     bool overAnyPoint = false;
     float percentSensitivity = 5;
@@ -183,7 +190,7 @@ public:
     double newX = (x - boundsX) / boundsW * 100.0;
     double newY = 100 - (y - boundsY) / boundsH * 100.0;
 
-    if (mSnapToGrid) {
+    if (GetPropertyValue(Property_SnapToGrid).first) {
       newX = std::roundf(newX / 5) * 5.0;
       newY = std::roundf(newY / 5) * 5.0;
     }
@@ -194,7 +201,7 @@ public:
 
   void OnMouseUp(float x, float y, const IMouseMod& mod) override
   {
-    if (!mIsEditable)
+    if (GetPropertyValue(Property_Freeze).first)
       return;
     //TODO: Tooltip dla punktu
     if (rightClickedDown) {
@@ -216,7 +223,7 @@ public:
     if ((mIsPointBeingDragged == false && mIsMidPointBeingDragged == false)
       || (mEditedPoint == nullptr && mEditedMidPoint == nullptr)
       || rightClickedDown
-      || !mIsEditable)
+      || GetPropertyValue(Property_Freeze).first)
       return;
 
     float boundsX = mWidgetBounds.L;
@@ -239,7 +246,7 @@ public:
     double newX = (x - boundsX) / boundsW * 100.0;
     double newY = 100 - (y - boundsY) / boundsH * 100.0;
 
-    if (mSnapToGrid) {
+    if (GetPropertyValue(Property_SnapToGrid).first) {
       newX = std::roundf(newX / 5) * 5.0;
       newY = std::roundf(newY / 5) * 5.0;
     }
@@ -256,34 +263,34 @@ public:
   //TODO: odpalać przy dodawaniu/usuwaniu punktów?
   void CalculateMidPoints()
   {
-    float x = mWidgetBounds.L;
-    float y = mWidgetBounds.T;
-    float w = mWidgetBounds.W();
-    float h = mWidgetBounds.H();
+  float x = mWidgetBounds.L;
+  float y = mWidgetBounds.T;
+  float w = mWidgetBounds.W();
+  float h = mWidgetBounds.H();
 
-    IVec2 midPoint;
-    for (auto it = mPoints.begin(); it != mPoints.end(); ++it) 
-    {
-      if (std::next(it) == mPoints.end()) 
-        break;
-      IVec2 thisPoint = IVec2(x + (*it)->x / 100.0 * w, y + h - (*it)->y / 100.0 * h);
-      IVec2 nextPoint = IVec2(x + (*std::next(it))->x / 100.0 * w, y + h - (*std::next(it))->y / 100.0 * h);
-      midPoint = thisPoint.GetMidPoint(nextPoint);
-      //TODO: only if non linear interpolation!
-      auto fy1 = [](double x) { return -2 * x + 2; };
-      auto fy2 = [](double x) { return 2 * x; };
-      midPoint.y = (((fy1((*it)->interpolationFactor)) * thisPoint.y) + ((fy2((*it)->interpolationFactor)) * nextPoint.y)) / 2.0;
-      (*it)->midPoint = midPoint;
-    }
+  IVec2 midPoint;
+  for (auto it = mPoints.begin(); it != mPoints.end(); ++it)
+  {
+    if (std::next(it) == mPoints.end())
+      break;
+    IVec2 thisPoint = IVec2(x + (*it)->x / 100.0 * w, y + h - (*it)->y / 100.0 * h);
+    IVec2 nextPoint = IVec2(x + (*std::next(it))->x / 100.0 * w, y + h - (*std::next(it))->y / 100.0 * h);
+    midPoint = thisPoint.GetMidPoint(nextPoint);
+    //TODO: only if non linear interpolation!
+    auto fy1 = [](double x) { return -2 * x + 2; };
+    auto fy2 = [](double x) { return 2 * x; };
+    midPoint.y = (((fy1((*it)->interpolationFactor)) * thisPoint.y) + ((fy2((*it)->interpolationFactor)) * nextPoint.y)) / 2.0;
+    (*it)->midPoint = midPoint;
+  }
   }
 
   void OnResize() override
   {
     SetTargetRECT(MakeRects(mRECT));
-    
+
     SetDirty(false);
   }
-  
+
   void Draw(IGraphics& g) override
   {
     CalculateMidPoints();
@@ -291,8 +298,8 @@ public:
     DrawBackground(g, mRECT);
     DrawWidget(g);
     DrawLabel(g);
-    
-    if(mStyle.drawFrame)
+
+    if (mStyle.drawFrame)
       g.DrawRect(GetColor(kFR), mWidgetBounds, &mBlend, mStyle.frameThickness);
   }
 
@@ -325,7 +332,7 @@ public:
         //g.DrawLine(COLOR_GREEN, (*it)->midPoint.x, (*it)->midPoint.y, (*std::next(it))->x, (*std::next(it))->y);
         //g.PathQuadraticBezierTo((*it)->midPoint.x, (*it)->midPoint.y, nextPoint.x, nextPoint.y);
         float lastDrawnX = 0;
-        for (float xp = thisPoint.x + 5; xp <= nextPoint.x; xp+=5) {
+        for (float xp = thisPoint.x + 5; xp <= nextPoint.x; xp += 5) {
           float yp = LagrangeInterpolation(g, xp, thisPoint, (*it)->midPoint, nextPoint);
           float minValue = std::min(thisPoint.y, nextPoint.y);
           float maxValue = std::max(thisPoint.y, nextPoint.y);
@@ -351,19 +358,22 @@ public:
     g.PathLineTo(vx0, vy0);
     pathLinePoints();
     g.PathFill(IPattern(mColor.WithOpacity(0.15f)));
-    
+
 
     //Rysowanie samych punktów
-    if (mFocusedPoint != nullptr) {
-      double vx = x + mFocusedPoint->x / 100.0 * w;
-      double vy = y + h - mFocusedPoint->y / 100.0 * h;
-      g.DrawCircle(mColor, vx, vy, 5.0f);
-    }
-    for (auto it : mPoints) {
-      double vx = x + it->x / 100.0 * w;
-      double vy = y + h - it->y / 100.0 * h;
-      g.DrawCircle(COLOR_BLACK, vx, vy, 2.5f);
-      g.FillCircle(IColor::LinearInterpolateBetween(mColor, COLOR_WHITE, 0.5f), vx, vy, mEditedPoint == it ? 4.0f : 2.5f);
+    if (!GetPropertyValue(Property_Freeze).first)
+    {
+      if (mFocusedPoint != nullptr) {
+        double vx = x + mFocusedPoint->x / 100.0 * w;
+        double vy = y + h - mFocusedPoint->y / 100.0 * h;
+        g.DrawCircle(mColor, vx, vy, 5.0f);
+      }
+      for (auto it : mPoints) {
+        double vx = x + it->x / 100.0 * w;
+        double vy = y + h - it->y / 100.0 * h;
+        g.DrawCircle(COLOR_BLACK, vx, vy, 2.5f);
+        g.FillCircle(IColor::LinearInterpolateBetween(mColor, COLOR_WHITE, 0.5f), vx, vy, mEditedPoint == it ? 4.0f : 2.5f);
+      }
     }
 
     //Linie odniesienia w tle
@@ -371,13 +381,13 @@ public:
     g.DrawLine(COLOR_WHITE, x, y + h / 2.0f, x + w, y + h / 2.0f, &BLEND_10);
     g.DrawLine(COLOR_WHITE, x + w / 2.0f, y, x + w / 2.0f, y + h, &BLEND_10);
 
+    //Skala na osi X
     auto scale = 3 * 0.5 / 27 * w; 
     g.DrawLine(COLOR_WHITE, x + 2 * scale, y - 1, x + 2 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + 4 * scale, y - 1, x + 4 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + 5 * scale, y - 1, x + 5 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + 6 * scale, y - 1, x + 6 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + 7 * scale, y - 1, x + 7 * scale, y + 2, &BLEND_75);
-
     g.DrawLine(COLOR_WHITE, x + w / 2 + 2 * scale, y - 1, x + w / 2 + 2 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + w / 2 + 4 * scale, y - 1, x + w / 2 + 4 * scale, y + 2, &BLEND_75);
     g.DrawLine(COLOR_WHITE, x + w / 2 + 6 * scale, y - 1, x + w / 2 + 6 * scale, y + 2, &BLEND_75);
@@ -387,15 +397,42 @@ public:
     g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-9", IRECT(x + 4 * scale, y, x + 6 * scale, y + 15));
     g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-6", IRECT(x + 5 * scale, y, x + 7 * scale, y + 15));
     g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-3", IRECT(x + 6 * scale, y, x + 8 * scale, y + 15));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "3", IRECT(x + w / 2 + scale, y, x + w / 2 + 3 * scale, y + 15));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "6", IRECT(x + w / 2 + 3 * scale, y, x + w / 2 + 5 * scale, y + 15));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "9", IRECT(x + w / 2 + 5 * scale, y, x + w / 2 + 7 * scale, y + 15));
+
+    //Skala na osi Y
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + h - 2 * scale, x + w + 1, y + h - 2 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + h - 4 * scale, x + w + 1, y + h - 4 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + h - 5 * scale, x + w + 1, y + h - 5 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + h - 6 * scale, x + w + 1, y + h - 6 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + h - 7 * scale, x + w + 1, y + h - 7 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + 2 * scale, x + w + 1, y + 2 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + 4 * scale, x + w + 1, y + 4 * scale, &BLEND_75);
+    g.DrawLine(COLOR_WHITE, x + w - 2, y + 6 * scale, x + w + 1, y + 6 * scale, &BLEND_75);
+
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-18", IRECT(x + w - 18, y + h - 3 * scale - 5, x + w - 3, y + h - scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-12", IRECT(x + w - 18, y + h - 5 * scale - 5, x + w - 3, y + h - 3 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-9", IRECT(x + w - 15, y + h - 3 * scale - 5, x + w, y + h - 4 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-6", IRECT(x + w - 15, y + h - 7 * scale - 5, x + w, y + h - 5 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "-3", IRECT(x + w - 15, y + h - 8 * scale - 5, x + w, y + h - 6 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "3", IRECT(x + w - 15, y + 5 * scale - 5, x + w, y + 7 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "6", IRECT(x + w - 15, y + 3 * scale - 5, x + w, y + 5 * scale - 5));
+    g.DrawText(mStyle.valueText.WithSize(12.0f).WithFGColor(COLOR_WHITE), "9", IRECT(x + w - 15, y + scale - 5, x + w, y + 3 * scale - 5));
 
 
     //Rysowanie kontrolek pomiędzy punktami
-    for (auto it = mPoints.begin(); it != mPoints.end(); ++it) {
-      if (std::next(it) == mPoints.end()) {
-        continue;
+    if (!GetPropertyValue(Property_Freeze).first)
+    {
+      for (auto it = mPoints.begin(); it != mPoints.end(); ++it) {
+        if (std::next(it) == mPoints.end()) {
+          continue;
+        }
+        g.DrawCircle(mColor, (*it)->midPoint.x, (*it)->midPoint.y, 4.0f);
       }
-      g.DrawCircle(mColor, (*it)->midPoint.x, (*it)->midPoint.y, 4.0f);
     }
+
+    //TODO:zmiana Property w innej kontrolce musi wywołać redraw tutaj
     
     ////TODO: DELETE
     ////Pisanie indeksów punktów
@@ -444,33 +481,33 @@ public:
     return mStyle.colorSpec.GetColor(color);
   }
 
-  void setIsEditable(bool isEditable)
-  {
-    mIsEditable = isEditable;
-  }
+  //void setIsEditable(bool isEditable)
+  //{
+  //  mIsEditable = isEditable;
+  //}
 
-  void setSnapToGrid(bool snapToGrid)
-  {
-    mSnapToGrid = snapToGrid;
-  }
+  //void setSnapToGrid(bool snapToGrid)
+  //{
+  //  mSnapToGrid = snapToGrid;
+  //}
 
-  bool getIsEditable()
-  {
-    return mIsEditable;
-  }
+  //bool getIsEditable()
+  //{
+  //  return mIsEditable;
+  //}
 
-  bool getSnapToGrid()
-  {
-    return mSnapToGrid;
-  }
+  //bool getSnapToGrid()
+  //{
+  //  return mSnapToGrid;
+  //}
 
   //TODO: jakie info wystawiać? dane na podstawie których tworzone są punkty, czy to po prostu sama tablica punktów czy raczej jakieś współczynniki?
   
 private:
   IColor mColor;
   std::set<ChartEditorPoint*, ChartEditorPointComparer> mPoints;
-  bool mSnapToGrid;
-  bool mIsEditable;
+  //bool mSnapToGrid;
+  //bool mIsEditable;
   ChartEditorPoint* mEditedPoint = nullptr;
   ChartEditorPoint* mFocusedPoint = nullptr;
   bool mIsPointBeingDragged = false;

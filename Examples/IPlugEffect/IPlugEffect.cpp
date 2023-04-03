@@ -19,13 +19,23 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     const IRECT b = pGraphics->GetBounds();
     //pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
     pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-250), kGain));
+    //TODO: propertiesy są bardziej "globalne" - nie dla konkretnego IVChartEditorControl tylko współdzielone
+    auto props = new std::unordered_map<std::string, std::pair<bool, std::string>> {
+      { Property_SnapToGrid, std::pair<bool, std::string>(true, "magnet") },
+      { Property_Freeze, std::pair<bool, std::string>(false, "freeze") }
+    };
+    IVChartEditorControl* lowChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_RED, kTab1, true, true, props);
+    IVChartEditorControl* midChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_ORANGE, kTab2, true, true, props);
+    IVChartEditorControl* highChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_YELLOW, kTab3, true, true, props);
+    IVChartEditorControl* masterChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, kTab4, true, true, props);
     pGraphics->AttachControl(new ITabbedPanel(  //TODO: RECT & COLOR from TabbedPanel?
       b.GetCentredInside(200, 300), "ITabbedPanel", DEFAULT_STYLE, std::vector<ITab*> {
-        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_RED, kTab1), "LOW"),
-        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_ORANGE, kTab2), "MID"),
-        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_YELLOW, kTab3), "HIGH"),
-        new ITab(new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, kTab4), "MASTER")
+        new ITab(lowChartEditor, "LOW"),
+        new ITab(midChartEditor, "MID"),
+        new ITab(highChartEditor, "HIGH"),
+        new ITab(masterChartEditor, "MASTER")
     }));
+    pGraphics->AttachControl(new IControlPropsEditor(b.GetCentredInside(200, 50).GetVShifted(100).GetFromRight(50), props));
   };
 #endif
 }

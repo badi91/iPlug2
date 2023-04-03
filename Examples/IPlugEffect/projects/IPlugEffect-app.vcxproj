@@ -272,6 +272,7 @@
     <ClInclude Include="..\..\..\Dependencies\IPlug\RTAudio\include\soundcard.h" />
     <ClInclude Include="..\..\..\Dependencies\IPlug\RTAudio\RtAudio.h" />
     <ClInclude Include="..\..\..\Dependencies\IPlug\RTMidi\RtMidi.h" />
+    <ClInclude Include="..\..\..\IGraphics\Controls\IControlPropsEditor.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IControls.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IFPSDisplayControl.h" />
     <ClInclude Include="..\..\..\IGraphics\Controls\IPopupMenuControl.h" />
@@ -368,6 +369,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\IPlugEffect.ico" />
+    <Image Include="C:\Users\Mateusz\Desktop\Freemimus\magnet.png">
+      <DeploymentContent>true</DeploymentContent>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\config\IPlugEffect-ios.xcconfig" />
