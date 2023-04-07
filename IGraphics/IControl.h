@@ -854,6 +854,7 @@ public:
    
     if (pressed)
     {
+      handleBounds = handleBounds.GetScaledAboutCentre(0.90f);
       if (mStyle.emboss)
       {
         shadowBounds.ReduceFromRight(mStyle.shadowOffset);
@@ -1062,20 +1063,20 @@ public:
         IRECT textRect;
         mControl->GetUI()->MeasureText(mStyle.labelText, mLabelStr.Get(), textRect);
 
-        mLabelBounds = parent.GetFromTop(textRect.H()).GetCentredInside(textRect.W(), textRect.H());
+        mLabelBounds = parent.GetFromBottom(textRect.H()).GetCentredInside(textRect.W(), textRect.H());
       }
       else
         mLabelBounds = IRECT();
       
       if(mLabelBounds.H())
-        clickableArea = parent.GetReducedFromTop(mLabelBounds.H());
+        clickableArea = parent.GetReducedFromBottom(mLabelBounds.H());
     }
     
     if (mStyle.showValue && !mValueInWidget)
     {
       IRECT textRect;
       
-      if(CStringHasContents(mValueStr.Get()))
+      if (CStringHasContents(mValueStr.Get()))
         mControl->GetUI()->MeasureText(mStyle.valueText, mValueStr.Get(), textRect);
 
       const float valueDisplayWidth = textRect.W() * mValueDisplayFrac;
@@ -1125,7 +1126,7 @@ protected:
   float mSplashRadius = 0.f; // Modified during the default SplashClickAnimationFunc to specify the radius of the splash
   IVec2 mSplashPoint = {0.f, 0.f}; // Set at the start of the SplashClickActionFunc to set the position of the splash
   float mMaxSplashRadius = 50.f;
-  float mTrackSize = 2.f;
+  float mTrackSize = 4.0f;
   float mValueDisplayFrac = 0.66f; // the fraction of the control width for the text entry
   IRECT mWidgetBounds; // The knob/slider/button
   IRECT mLabelBounds; // A piece of text above the control

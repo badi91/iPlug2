@@ -11,6 +11,9 @@ enum EParams
   kTab2,
   kTab3,
   kTab4,
+  kHighPre,
+  kHighPost,
+  kHighBalance,
   kNumParams
 };
 

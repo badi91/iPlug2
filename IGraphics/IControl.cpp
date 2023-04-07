@@ -121,7 +121,7 @@ const IParam* IControl::GetParam(int valIdx) const
 {
   int paramIdx = GetParamIdx(valIdx);
   
-  if(paramIdx > kNoParameter)
+  if(paramIdx > kNoParameter && mDelegate != nullptr)
     return mDelegate->GetParam(paramIdx);
   else
     return nullptr;
@@ -206,7 +206,7 @@ void IControl::SetDirty(bool triggerAction, int valIdx)
   {
     auto paramUpdate = [this](int v)
     {
-      if (GetParamIdx(v) > kNoParameter)
+      if (GetParamIdx(v) > kNoParameter && GetDelegate() != nullptr && GetUI() != nullptr)
       {
         GetDelegate()->SendParameterValueFromUI(GetParamIdx(v), GetValue(v)); //TODO: take tuple
         GetUI()->UpdatePeers(this, v);
@@ -807,7 +807,7 @@ void IKnobControlBase::OnMouseDown(float x, float y, const IMouseMod& mod)
   mMouseDown = true;
   mMouseDragValue = GetValue();
 
-  if (mHideCursorOnDrag)
+  if (mHideCursorOnDrag && GetUI() != nullptr)
     GetUI()->HideMouseCursor(true, true);
 
   IControl::OnMouseDown(x, y, mod);
@@ -815,7 +815,7 @@ void IKnobControlBase::OnMouseDown(float x, float y, const IMouseMod& mod)
 
 void IKnobControlBase::OnMouseUp(float x, float y, const IMouseMod& mod)
 {
-  if (mHideCursorOnDrag)
+  if (mHideCursorOnDrag && GetUI() != nullptr)
     GetUI()->HideMouseCursor(false);
   
   mMouseDown = false;

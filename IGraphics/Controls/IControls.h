@@ -253,14 +253,15 @@ public:
   void SetInnerPointerFrac(float frac) { mInnerPointerFrac = frac; }
   void SetOuterPointerFrac(float frac) { mOuterPointerFrac = frac; }
   void SetPointerThickness(float thickness) { mPointerThickness = thickness; }
+  virtual IVKnobControl* SetTrackSize(float trackSize);
 
 protected:
   virtual IRECT GetKnobDragBounds() override;
 
   float mTrackToHandleDistance = 4.f;
   float mInnerPointerFrac = 0.1f;
-  float mOuterPointerFrac = 1.f;
-  float mPointerThickness = 2.5f;
+  float mOuterPointerFrac = 0.95f;
+  float mPointerThickness = 1.5f;
   float mAngle1, mAngle2;
   float mAnchorAngle; // for bipolar arc
   bool mValueMouseOver = false;

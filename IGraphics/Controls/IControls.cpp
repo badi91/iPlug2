@@ -551,10 +551,19 @@ IRECT IVKnobControl::GetKnobDragBounds()
   return r;
 }
 
+IVKnobControl* IVKnobControl::SetTrackSize(float trackSize)
+{
+  mTrackSize = trackSize;
+  return this;
+}
+
 void IVKnobControl::DrawWidget(IGraphics& g)
 {
+  if (mWidgetBounds.Empty())
+    mWidgetBounds = mRECT;
+
   float widgetRadius; // The radius out to the indicator track arc
-  
+    
   if(mWidgetBounds.W() > mWidgetBounds.H())
     widgetRadius = (mWidgetBounds.H()/2.f);
   else
@@ -563,16 +572,25 @@ void IVKnobControl::DrawWidget(IGraphics& g)
   const float cx = mWidgetBounds.MW(), cy = mWidgetBounds.MH();
   
   widgetRadius -= (mTrackSize/2.f);
+  mStyle.frameThickness = 0.1f;//TODO: wywalić na zewnątrz
+  mStyle.drawShadows = false;
 
   IRECT knobHandleBounds = mWidgetBounds.GetCentredInside((widgetRadius - mTrackToHandleDistance) * 2.f );
   const float angle = mAngle1 + (static_cast<float>(GetValue()) * (mAngle2 - mAngle1));
-  DrawIndicatorTrack(g, angle, cx, cy, widgetRadius);
+  DrawIndicatorTrack(g, angle, cx, cy, widgetRadius * 0.9f);
+
+  //TODO: custom shadow
+  IRECT shadowBounds = knobHandleBounds.GetScaledAboutCentre(0.9f).GetTranslated(0, 6.0f);
+  g.FillEllipse(GetColor(kSH), shadowBounds);
+
   DrawPressableShape(g, /*mShape*/ EVShape::Ellipse, knobHandleBounds, mMouseDown, mMouseIsOver, IsDisabled());
+
   DrawPointer(g, angle, cx, cy, knobHandleBounds.W() / 2.f);
 }
 
 void IVKnobControl::DrawIndicatorTrack(IGraphics& g, float angle, float cx, float cy, float radius)
 {
+  g.DrawArc(COLOR_DARK_GRAY, cx, cy, radius, mAngle1 - 2.0f, mAngle2 + 2.0f, &mBlend, mTrackSize + 2.0f);
   if (mTrackSize > 0.f)
   {
     g.DrawArc(GetColor(kX1), cx, cy, radius, angle >= mAnchorAngle ? mAnchorAngle : mAnchorAngle - (mAnchorAngle - angle), angle >= mAnchorAngle ? angle : mAnchorAngle, &mBlend, mTrackSize);
@@ -581,7 +599,7 @@ void IVKnobControl::DrawIndicatorTrack(IGraphics& g, float angle, float cx, floa
 
 void IVKnobControl::DrawPointer(IGraphics& g, float angle, float cx, float cy, float radius)
 {
-  g.DrawRadialLine(GetColor(kFR), cx, cy, angle, mInnerPointerFrac * radius, mOuterPointerFrac * radius, &mBlend, mPointerThickness);
+  g.DrawRadialLine(GetColor(kX1), cx, cy, angle, mInnerPointerFrac * radius, mOuterPointerFrac * radius, &mBlend, mPointerThickness);
 }
 
 void IVKnobControl::OnMouseDown(float x, float y, const IMouseMod& mod)

@@ -48,8 +48,8 @@ public:
   : IControl(bounds)
   , IVectorBase(style)
   , IHasProperties(properties != nullptr ? properties : new std::unordered_map<std::string, std::pair<bool, std::string>> {
-    { Property_SnapToGrid, std::pair<bool, std::string>(true, "magnet") },
-    { Property_Freeze, std::pair<bool, std::string>(false, "freeze") }
+    { Property_Freeze, std::pair<bool, std::string>(false, "freeze") },
+    { Property_SnapToGrid, std::pair<bool, std::string>(true, "magnet") }
   })
   , mColor(color)
   //, mSnapToGrid(snapToGrid)
