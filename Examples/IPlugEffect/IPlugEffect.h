@@ -14,6 +14,7 @@ enum EParams
   kHighPre,
   kHighPost,
   kHighBalance,
+  kSlider,
   kNumParams
 };
 

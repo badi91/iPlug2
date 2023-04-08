@@ -773,7 +773,8 @@ public:
   virtual void DrawBackground(IGraphics& g, const IRECT& rect)
   {
     IBlend blend = mControl->GetBlend();
-    g.FillRect(GetColor(kBG), rect, &blend);
+
+    g.FillRoundRect(GetColor(kBG), rect, mStyle.roundness * (std::min(rect.W(), rect.H()))/2.0f, &blend);
   }
   
   /** Draw the IVControl main widget (override) */
@@ -843,7 +844,7 @@ public:
    * @param disabled /c true if the shape should be drawn disabled */
   void DrawPressableEllipse(IGraphics& g, const IRECT& bounds, bool pressed, bool mouseOver, bool disabled)
   {
-    IRECT handleBounds = bounds;
+    IRECT handleBounds = mouseOver ? bounds.GetScaledAboutCentre(0.9f) : bounds;
     IRECT centreBounds = bounds.GetPadded(-mStyle.shadowOffset);
     IRECT shadowBounds = bounds.GetTranslated(mStyle.shadowOffset, mStyle.shadowOffset);
     const IBlend blend = mControl->GetBlend();
@@ -854,7 +855,6 @@ public:
    
     if (pressed)
     {
-      handleBounds = handleBounds.GetScaledAboutCentre(0.90f);
       if (mStyle.emboss)
       {
         shadowBounds.ReduceFromRight(mStyle.shadowOffset);

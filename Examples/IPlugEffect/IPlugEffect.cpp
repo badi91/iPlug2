@@ -5,10 +5,11 @@
 IPlugEffect::IPlugEffect(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPresets))
 {
-  GetParam(kGain)->InitDouble("Gain", 0., 0., 100.0, 0.01, "%");
-  GetParam(kHighPre)->InitDouble("PRE", 0., 0.0, 100.0, 0.01, "%");
-  GetParam(kHighPost)->InitDouble("POST", 0., 0., 100.0, 0.01, "%");
-  GetParam(kHighBalance)->InitDouble("><", 0., -100.0, 100.0, 0.02, "");
+  GetParam(kGain)->InitDouble("Gain", 0.0, 0.0, 100.0, 0.01, "%");
+  GetParam(kHighPre)->InitDouble("PRE", 50.0, 0.0, 100.0, 0.01, "%");
+  GetParam(kHighPost)->InitDouble("POST", 50.0, 0.0, 100.0, 0.01, "%");
+  GetParam(kHighBalance)->InitDouble("><", 0.0, -100.0, 100.0, 0.02, "");
+  GetParam(kSlider)->InitEnum("SLIDER", 4, 4, "", 0, "", "ON", "COMP OFF", "MUTED", "OFF");
 
 #if IPLUG_EDITOR // http://bit.ly/2S64BDd
   mMakeGraphicsFunc = [&]() {
@@ -21,7 +22,9 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
     const IRECT b = pGraphics->GetBounds();
     //pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(50)));
-    //pGraphics->AttachControl(new IVKnobControl(b.GetCentredInside(100).GetVShifted(-250), kGain));
+    pGraphics->EnableMouseOver(true);
+    //auto gainKnob = new IVKnobControl(b.GetCentredInside(100).GetVShifted(-100), kGain);
+    //pGraphics->AttachControl(gainKnob);
     auto props = new std::unordered_map<std::string, std::pair<bool, std::string>> {
       { Property_SnapToGrid, std::pair<bool, std::string>(true, "magnet") },
       { Property_Freeze, std::pair<bool, std::string>(false, "freeze") }
@@ -32,9 +35,9 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     IVChartEditorControl* highChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_YELLOW, kTab3, true, true, props);
     IVChartEditorControl* masterChartEditor = new IVChartEditorControl(b, "IVChartEditorControl", DEFAULT_STYLE, COLOR_GREEN, kTab4, true, true, props);
 
-    auto highPreGain = new IVKnobControl(b.GetFromTLHC(70, 95).GetVShifted(325).GetHShifted(215), kHighPre);
-    auto highPostGain = new IVKnobControl(b.GetFromTLHC(70, 95).GetVShifted(325).GetHShifted(290), kHighPost);
-    auto highBalance = new IVKnobControl(b.GetFromTLHC(70, 95).GetVShifted(425).GetHShifted(150), kHighBalance, "", DEFAULT_STYLE, false, false, -135.0f, 135.0f, 0.0f);
+    auto highPreGain = new IVKnobControl(b.GetFromTLHC(70, 95).GetVShifted(305).GetHShifted(205), kHighPre);
+    auto highPostGain = new IVKnobControl(b.GetFromTLHC(70, 95).GetVShifted(305).GetHShifted(290), kHighPost);
+    auto highBalance = new IVKnobControl(b.GetFromTLHC(60, 85).GetVShifted(405).GetHShifted(140), kHighBalance, "", DEFAULT_STYLE, false, false, -135.0f, 135.0f, 0.0f);
     highPreGain->SetTrackSize(8.0f)->SetShowValue(false);
     highPostGain->SetTrackSize(8.0f)->SetShowValue(false);
     highBalance->SetTrackSize(8.0f)->SetShowValue(false);
@@ -55,6 +58,17 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
         new ITab(masterChartEditor, "MASTER")
     }));
     pGraphics->AttachControl(new IControlPropsEditor(b.GetFromTLHC(250, 30).GetVShifted(265).GetHShifted(5), props));
+
+    auto slider = new IVSliderControl(b.GetFromTLHC(100, 75).GetVShifted(315).GetHShifted(110), kSlider);
+    slider->SetShowValueLabels(true);
+    pGraphics->AttachControl(slider);
+
+    auto gainLabel = new IVLabelControl(b.GetFromTLHC(40, 20).GetVShifted(380).GetHShifted(262).GetPadded(2), "GAIN");
+    gainLabel->SetColor(kBG, IColor(96, 0, 0, 0));
+    gainLabel->SetRoundness(0.5f);
+    pGraphics->AttachControl(gainLabel);
+
+    pGraphics->AttachControl(new IVNumberBoxControl(b.GetCentredInside(200)));
   };
 #endif
 }

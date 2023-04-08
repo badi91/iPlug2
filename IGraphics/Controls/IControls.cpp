@@ -42,9 +42,9 @@ void IVLabelControl::Draw(IGraphics& g)
   if (mStr.GetLength())
   {
     if (mStyle.drawShadows && !IsDisabled())
-      g.DrawText(mStyle.valueText.WithFGColor(GetColor(kSH)), mStr.Get(), mRECT.GetTranslated(mStyle.shadowOffset, mStyle.shadowOffset), &mBlend);
+      g.DrawText(mStyle.valueText.WithFGColor(GetColor(kSH)).WithAlign(EAlign::Center).WithVAlign(EVAlign::Middle), mStr.Get(), mRECT.GetTranslated(mStyle.shadowOffset, mStyle.shadowOffset), &mBlend);
 
-    g.DrawText(mStyle.valueText, mStr.Get(), mRECT, &mBlend);
+    g.DrawText(mStyle.valueText.WithAlign(EAlign::Center).WithVAlign(EVAlign::Middle), mStr.Get(), mRECT, &mBlend);
   }
 
   if (mStyle.drawFrame)
@@ -713,14 +713,22 @@ void IVSliderControl::Draw(IGraphics& g)
   DrawLabel(g);
   DrawWidget(g);
   DrawValue(g, mValueMouseOver);
+  if (mShowValueLabels)
+    DrawValueLabels(g, mRECT.GetReducedFromLeft(2 * mTrackSize + 2 * mHandleSize + 5.0f));
 }
 
 void IVSliderControl::DrawTrack(IGraphics& g, const IRECT& filledArea)
 {
-  const float extra = mHandleInsideTrack ? mHandleSize : 0.f;
-  const IRECT adjustedTrackBounds = mDirection == EDirection::Vertical ? mTrackBounds.GetVPadded(extra) : mTrackBounds.GetHPadded(extra);
-  const IRECT adjustedFillBounds = mDirection == EDirection::Vertical ? filledArea.GetVPadded(extra) : filledArea.GetHPadded(extra);
-  const float cr = GetRoundedCornerRadius(mTrackBounds);
+  const float extra = mHandleInsideTrack ? mHandleSize + 2.0f : 0.f;
+  const IRECT adjustedTrackBounds = mDirection == EDirection::Vertical ? mTrackBounds.GetHPadded(extra).GetVPadded(extra) : mTrackBounds.GetVPadded(extra);
+  const IRECT adjustedFillBounds = mDirection == EDirection::Vertical ? filledArea.GetHPadded(extra).GetVPadded(extra) : filledArea.GetVPadded(extra);
+  const float cr = mHandleInsideTrack ? extra : GetRoundedCornerRadius(mTrackBounds);
+
+ /* g.DrawRect(COLOR_YELLOW, adjustedTrackBounds, &mBlend, mStyle.frameThickness);
+  g.DrawRect(COLOR_RED, adjustedFillBounds, &mBlend, mStyle.frameThickness);
+  g.DrawRoundRect(COLOR_BLUE, adjustedTrackBounds, cr, &mBlend, mStyle.frameThickness);
+  g.DrawRect(COLOR_BLACK, mWidgetBounds, &mBlend, mStyle.frameThickness);
+  g.DrawRect(COLOR_GREEN, mTrackBounds, &mBlend, mStyle.frameThickness);*/
   
   g.FillRoundRect(GetColor(kSH), adjustedTrackBounds, cr, &mBlend);
   g.FillRoundRect(GetColor(kX1), adjustedFillBounds, cr, &mBlend);
@@ -760,6 +768,20 @@ void IVSliderControl::DrawWidget(IGraphics& g)
 void IVSliderControl::DrawHandle(IGraphics& g, const IRECT& bounds)
 {
   DrawPressableShape(g, mShape, bounds, mMouseDown, mMouseIsOver, IsDisabled());
+}
+
+//TODO: if jest 1 param i jest vaslign = center
+void IVSliderControl::DrawValueLabels(IGraphics& g, const IRECT& bounds)
+{
+  auto param = GetParam(0);
+  if (param->Type() == param->kTypeEnum) {
+    auto numValues = param->GetMax() + 1;
+    auto h = bounds.H() / numValues;
+    for (auto i = 0; i < numValues; i++) {
+      auto valueBounds = bounds.GetFromTop(h).GetVShifted(i * h).GetPadded(-5.0f);
+      g.DrawText(IText(mStyle.valueText.mSize, COLOR_WHITE, nullptr, EAlign::Near, EVAlign::Middle), param->GetDisplayText(i), valueBounds, &mBlend);
+    }
+  }
 }
 
 void IVSliderControl::OnMouseDown(float x, float y, const IMouseMod& mod)
@@ -803,9 +825,9 @@ void IVSliderControl::OnResize()
   SetTargetRECT(MakeRects(mRECT));
   
   if(mDirection == EDirection::Vertical)
-    mTrackBounds = mWidgetBounds.GetPadded(-mHandleSize).GetMidHPadded(mTrackSize);
+    mTrackBounds = mWidgetBounds.GetVPadded(-5.0f).GetPadded(-mHandleSize).GetFromLeft(mTrackSize).GetHShifted(2 * mStyle.frameThickness);
   else
-    mTrackBounds = mWidgetBounds.GetPadded(-mHandleSize).GetMidVPadded(mTrackSize);
+    mTrackBounds = mWidgetBounds.GetPadded(-mHandleSize).GetFromTop(mTrackSize);
 
   SetDirty(false);
 }

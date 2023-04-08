@@ -19,6 +19,7 @@ public:
   std::vector<IControl*> subControls;
   std::string name;
   IRECT tabSelectorRect;
+  bool tabSelectorFocused = false;
   //bool isActive = false;
   void AttachIControl(IControl* control) {
     subControls.push_back(control);
@@ -56,9 +57,9 @@ public:
     for (int i = 0; i < mTabs.size(); i++) {
       auto tab = mTabs[i];
       tab->control->SetPlotBound(mWidgetBounds.GetFromTLHC(270, 270).GetPadded(-5.0f));
-      auto wholeSelectorRect = mWidgetBounds.GetFromTLHC(105, 150).GetVShifted(300);
+      auto wholeSelectorRect = mWidgetBounds.GetFromTLHC(95, 125).GetVShifted(300);
       double targetH = wholeSelectorRect.H() / mTabs.size();
-      tab->tabSelectorRect = wholeSelectorRect.GetFromTop(targetH).GetVShifted(targetH * i);
+      tab->tabSelectorRect = wholeSelectorRect.GetFromTop(targetH).GetVShifted(targetH * i).GetPadded(-2.0f);
     }
 
     //freezeButtonRect = mWidgetBounds.GetFromBRHC(10.0f, 10.0f).GetHShifted(-10.0).GetVShifted(-10.0f);
@@ -66,7 +67,14 @@ public:
     
     SetDirty(false);
   }
-  
+
+  void DrawBackground(IGraphics& g, const IRECT& rect) override
+  {
+    IBlend blend = mControl->GetBlend();
+    g.FillRect(GetColor(kBG), rect, &blend);
+    g.FillRect(IColor(255, 150, 150, 150), rect.GetFromTLHC(750, 355).GetVShifted(300), &blend);
+  }
+
   void Draw(IGraphics& g) override
   {
     DrawBackground(g, mRECT);
@@ -78,10 +86,11 @@ public:
 
     for (int i = 0; i < mTabs.size(); i++) {
       auto tab = mTabs[i];
-      auto textStyle = mStyle.valueText.WithSize(16.0f).WithFGColor((i == activeTabIndex ? COLOR_LIGHT_GRAY : COLOR_DARK_GRAY)).WithAlign(EAlign::Far).WithVAlign(EVAlign::Middle);
+      auto selectorWidth = tab->tabSelectorFocused ? 12.0f : 8.0f;
+      auto textStyle = mStyle.valueText.WithSize(20.0f).WithFGColor((i == activeTabIndex ? COLOR_LIGHT_GRAY : COLOR_DARK_GRAY)).WithAlign(EAlign::Far).WithVAlign(EVAlign::Middle);
       g.FillRect((i == activeTabIndex ? COLOR_GRAY : COLOR_MID_GRAY), tab->tabSelectorRect);
       g.DrawText(textStyle, tab->name.c_str(), tab->tabSelectorRect.GetFromRight(tab->tabSelectorRect.W() - 5.0f).GetPadded(-2.0f));
-      g.FillRect(tab->control->GetColor(), tab->tabSelectorRect.GetFromLeft(5.0f));
+      g.FillRect(tab->control->GetColor(), tab->tabSelectorRect.GetFromLeft(selectorWidth));
     }
 
     ////Przycisk freeze
@@ -104,6 +113,20 @@ public:
     //  i->Draw(g);
   }
 
+  void OnMouseOver(float x, float y, const IMouseMod& mod) override
+  {
+    for (auto tab : mTabs) {
+      tab->tabSelectorFocused = tab->tabSelectorRect.Contains(x, y);
+    }
+  }
+
+  void OnMouseOut() override
+  {
+    for (auto tab : mTabs) {
+      tab->tabSelectorFocused = false;
+    }
+  }
+
   void OnMouseMove(float x, float y, float dx, float dy, const IMouseMod& mod) override
   {
     if (getActiveTab()->control->getPlotBound().Contains(x, y))
@@ -124,23 +147,26 @@ public:
     //if (magnetButtonRect.Contains(x, y))
     //  activeControl->setSnapToGrid(!activeControl->getSnapToGrid());
 
-    auto wholeSelectorRect = mWidgetBounds.GetFromTLHC(105, 150).GetVShifted(300);
+    auto wholeSelectorRect = mWidgetBounds.GetFromTLHC(95, 125).GetVShifted(300);
 
+    int prevActiveTab = activeTabIndex;
     int i = 0;
     for (auto tab : mTabs) {
       if (tab->tabSelectorRect.Contains(x, y)) {
         activeTabIndex = i;
-        for (auto control : tab->subControls) {
-          control->Hide(false);
-        }
-      }
-      else if (wholeSelectorRect.Contains(x, y)) {
-        for (auto control : tab->subControls) {
-          control->Hide(true);
-        }
+        break;
       }
       ++i;
     }
+
+    if (prevActiveTab != activeTabIndex) {
+      for (auto tab : mTabs) {
+        for (auto control : tab->subControls) {
+          control->Hide(tab != mTabs[activeTabIndex]);
+        }
+      }
+    }
+
     if (activeControl->getPlotBound().Contains(x, y))
       activeControl->OnMouseDown(x, y, mod);
 

@@ -259,9 +259,9 @@ protected:
   virtual IRECT GetKnobDragBounds() override;
 
   float mTrackToHandleDistance = 4.f;
-  float mInnerPointerFrac = 0.1f;
+  float mInnerPointerFrac = 0.2f;
   float mOuterPointerFrac = 0.95f;
-  float mPointerThickness = 1.5f;
+  float mPointerThickness = 2.5f;
   float mAngle1, mAngle2;
   float mAnchorAngle; // for bipolar arc
   bool mValueMouseOver = false;
@@ -272,15 +272,16 @@ class IVSliderControl : public ISliderControlBase
                       , public IVectorBase
 {
 public:
-  IVSliderControl(const IRECT& bounds, int paramIdx = kNoParameter, const char* label = "", const IVStyle& style = DEFAULT_STYLE, bool valueIsEditable = false, EDirection dir = EDirection::Vertical, double gearing = DEFAULT_GEARING, float handleSize = 8.f, float trackSize = 2.f, bool handleInsideTrack = false);
+  IVSliderControl(const IRECT& bounds, int paramIdx = kNoParameter, const char* label = "", const IVStyle& style = DEFAULT_STYLE, bool valueIsEditable = false, EDirection dir = EDirection::Vertical, double gearing = DEFAULT_GEARING, float handleSize = 8.f, float trackSize = 2.f, bool handleInsideTrack = true);
   
-  IVSliderControl(const IRECT& bounds, IActionFunction aF, const char* label = "", const IVStyle& style = DEFAULT_STYLE, bool valueIsEditable = false, EDirection dir = EDirection::Vertical, double gearing = DEFAULT_GEARING, float handleSize = 8.f, float trackSize = 2.f, bool handleInsideTrack = false);
+  IVSliderControl(const IRECT& bounds, IActionFunction aF, const char* label = "", const IVStyle& style = DEFAULT_STYLE, bool valueIsEditable = false, EDirection dir = EDirection::Vertical, double gearing = DEFAULT_GEARING, float handleSize = 8.f, float trackSize = 2.f, bool handleInsideTrack = true);
 
   virtual ~IVSliderControl() {}
   void Draw(IGraphics& g) override;
   virtual void DrawWidget(IGraphics& g) override;
   virtual void DrawTrack(IGraphics& g, const IRECT& filledArea);
   virtual void DrawHandle(IGraphics& g, const IRECT& bounds);
+  virtual void DrawValueLabels(IGraphics& g, const IRECT& bounds);
 
   void OnMouseDown(float x, float y, const IMouseMod& mod) override;
   void OnMouseDblClick(float x, float y, const IMouseMod& mod) override;
@@ -291,10 +292,12 @@ public:
   void OnResize() override;
   void SetDirty(bool push, int valIdx = kNoValIdx) override;
   void OnInit() override;
+  void SetShowValueLabels(bool show) { mShowValueLabels = show; mStyle.showValue = mStyle.showLabel = mStyle.showValue && !show; }
 
 protected:
   bool mHandleInsideTrack = false;
   bool mValueMouseOver = false;
+  bool mShowValueLabels = false;//TODO: plus align Left/Right
 };
 
 /** A vector range slider control, with two handles */
