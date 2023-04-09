@@ -98,6 +98,7 @@ public:
   
   void DrawValue(IGraphics& g, bool mouseOver) override;
   void DrawWidget(IGraphics& g) override;
+  void DrawLabel(IGraphics& g) override;
 protected:
   WDL_String mOffText;
   WDL_String mOnText;

@@ -69,6 +69,8 @@ IPlugEffect::IPlugEffect(const InstanceInfo& info)
     pGraphics->AttachControl(gainLabel);
 
     pGraphics->AttachControl(new IVNumberBoxControl(b.GetCentredInside(200)));
+
+    pGraphics->AttachControl(new IVToggleControl(b.GetFromTLHC(90, 60).GetHShifted(5).GetVShifted(440), -1, "SOLO"));
   };
 #endif
 }

@@ -172,20 +172,35 @@ IVToggleControl::IVToggleControl(const IRECT& bounds, IActionFunction aF, const 
   SetValue((double) initialState);
 }
 
+void IVToggleControl::DrawLabel(IGraphics& g) {
+  auto style = mStyle.labelText.WithAlign(EAlign::Center).WithVAlign(EVAlign::Middle).WithFGColor(COLOR_WHITE).WithSize(12.0f);
+  auto labelBounds = mWidgetBounds.GetReducedFromLeft(mWidgetBounds.W() * 0.1f);
+  g.DrawText(style, mLabelStr.Get(), labelBounds, &mBlend);
+}
+
 void IVToggleControl::DrawWidget(IGraphics& g)
 {
-  DrawPressableShape(g, mShape, mWidgetBounds, GetValue() > 0.5, mMouseIsOver, IsDisabled());
+  //This is background actually
+  g.FillRoundRect(IColor(96, 0, 0, 0), mWidgetBounds, 0.2f * std::min(mWidgetBounds.W(), mWidgetBounds.H()) / 2.0f);
+  //auto circleBounds = mWidgetBounds.GetFromLeft(mWidgetBounds.W() * 0.2f).GetCentredInside(40, 40);
+  //DrawPressableShape(g, EVShape::Ellipse, circleBounds, GetValue() > 0.5, mMouseIsOver, IsDisabled());
 }
 
 void IVToggleControl::DrawValue(IGraphics& g, bool mouseOver)
 {
   if(mouseOver)
     g.FillRect(GetColor(kHL), mValueBounds, &mBlend);
-  
+
+  auto circleBounds = mWidgetBounds.GetFromLeft(mWidgetBounds.W() * 0.5f).GetCentredInside(15);
+  auto center_x = (circleBounds.L + circleBounds.R) / 2.0f;
+  auto center_y = (circleBounds.T + circleBounds.B) / 2.0f;
+  auto r = circleBounds.W() / 2.0f;
+
+  g.DrawCircle(IColor(164, 255, 255, 255), center_x, center_y, r, &mBlend, 1.0f);
+  g.DrawCircle(IColor(164, 0, 0, 0), center_x, center_y, r - 1.0f, &mBlend, 2.0f);
+
   if(GetValue() > 0.5)
-    g.DrawText(mStyle.valueText, mOnText.Get(), mValueBounds, &mBlend);
-  else
-    g.DrawText(mStyle.valueText, mOffText.Get(), mValueBounds, &mBlend);
+    g.FillCircle(GetColor(kFG), center_x, center_y, r - 3.5f, &mBlend);
 }
 
 //TODO: Don't Repeat Yourself!
